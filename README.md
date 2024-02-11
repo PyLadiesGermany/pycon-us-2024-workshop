@@ -1,4 +1,4 @@
-# Monitoring carbon emissions: making the impact of your python code visible
+# Monitoring carbon emissions: making the impact of your python code visible 🏭 📈
 
 “If the Internet was a country, it would be the 4th largest polluter”  [[1](https://www.sustainablewebmanifesto.com/#citation)] The power to make impactful change through technology has never been greater. Doing so starts with understanding the problem space. Our workshop will guide you through the process of quantifying the emissions of your Python code and integrating this awareness into your monitoring strategy. 
 
