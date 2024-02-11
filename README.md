@@ -1,6 +1,6 @@
 # Monitoring carbon emissions: making the impact of your python code visible 🏭 📈
 
-“If the Internet was a country, it would be the 4th largest polluter”  [[1](https://www.sustainablewebmanifesto.com/#citation)] The power to make impactful change through technology has never been greater. Doing so starts with understanding the problem space. Our workshop will guide you through the process of quantifying the emissions of your Python code and integrating this awareness into your monitoring strategy. 
+*“If the Internet was a country, it would be the 4th largest polluter”*  [[1](https://www.sustainablewebmanifesto.com/#citation)] The power to make impactful change through technology has never been greater. Doing so starts with understanding the problem space. Our workshop will guide you through the process of quantifying the emissions of your Python code and integrating this awareness into your monitoring strategy.
 
 Starting with the basics of observability, an essential part of operating a deployed service, you’ll learn why it’s important to monitor your Python code, what makes a good metric, and the common pitfalls to avoid. We’ll then dive into the practical aspects of exposing and creating custom metrics, scraping and storing them in Prometheus, a time series database, and then visualising them in dashboards using Grafana.
 
@@ -8,9 +8,14 @@ The workshop will also include an overview of climate-conscious tech, discussing
 
 By attending this workshop, you’ll gain valuable insights and hands-on experience in making your code more carbon-conscious. You’ll learn about carbon-aware workloads, strategies for making your services more energy, and carbon efficient, the importance of cloud provider regions and transparency, and how to advocate for change. These skills and knowledge can be integrated into your day-to-day work, making a real difference in our world.
 
-Join us in this journey towards a more sustainable future in tech and a better planet for everyone. 
+Join us in this journey towards a more sustainable future in tech and a better planet for everyone.
 
+This workshop has been developed for PyCon US 2024 by @Simpcyclassy and @sleepypioneer. It is developed on top of iterations of this material by @Vinesse, @emilywoods, and originally developed by @jasongwartz and @sleepypioneer.
 
+---
+WIP
+
+<s>
 ### Objective
 
 In the directory `app/`, we have an application that runs a Python web server with the endpoint `/treecounter`. It displays the total number of trees planted by Ecosia users. We want to start observing the behavior of this application at runtime by tracking and exporting metric data.
@@ -237,7 +242,7 @@ Finally we see the total sum of all observed values:
 ```
 request_latency_seconds_sum{endpoint="/treecounter"} 1.13912788000016
 ```
-
+</s>
 To learn more, you can read about [Prometheus Histogram best practices](https://prometheus.io/docs/practices/histograms/).
 
 ---
