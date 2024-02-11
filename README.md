@@ -1,5 +1,15 @@
-# Workshop: We know what your app did last summer. Do you? 👀
-## Observing Python Applications with Prometheus 🔥🐍  
+# Monitoring carbon emissions: making the impact of your python code visible
+
+“If the Internet was a country, it would be the 4th largest polluter”  [[1](https://www.sustainablewebmanifesto.com/#citation)] The power to make impactful change through technology has never been greater. Doing so starts with understanding the problem space. Our workshop will guide you through the process of quantifying the emissions of your Python code and integrating this awareness into your monitoring strategy. 
+
+Starting with the basics of observability, an essential part of operating a deployed service, you’ll learn why it’s important to monitor your Python code, what makes a good metric, and the common pitfalls to avoid. We’ll then dive into the practical aspects of exposing and creating custom metrics, scraping and storing them in Prometheus, a time series database, and then visualising them in dashboards using Grafana.
+
+The workshop will also include an overview of climate-conscious tech, discussing the tech industry’s contribution to the climate crisis and introducing the principles of green coding. We’ll explore techniques and libraries for extracting metrics for carbon awareness, because "If you can't measure it, you can't improve it." (Peter Drucker) and guide attendees through a practical session on instrumenting your Python code for carbon emissions and visualizing this data.
+
+By attending this workshop, you’ll gain valuable insights and hands-on experience in making your code more carbon-conscious. You’ll learn about carbon-aware workloads, strategies for making your services more energy, and carbon efficient, the importance of cloud provider regions and transparency, and how to advocate for change. These skills and knowledge can be integrated into your day-to-day work, making a real difference in our world.
+
+Join us in this journey towards a more sustainable future in tech and a better planet for everyone. 
+
 
 ### Objective
 
