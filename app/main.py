@@ -2,6 +2,8 @@ import requests
 from string import Template
 import time
 import random
+
+from codecarbon import EmissionsTracker
 from http.server import HTTPServer
 from prometheus_client import MetricsHandler, Counter
 from util import artificial_503, artificial_latency
@@ -11,7 +13,12 @@ HOST_NAME = "0.0.0.0"  # This will map to available port in docker
 PORT_NUMBER = 8001
 
 trees_api_url = "https://api.ecosia.org/v1/trees/count"
-requestCounter = Counter('requests_total', 'total number of requests', ['status', 'endpoint'])
+requestCounter = Counter("requests_total", "total number of requests", ["status", "endpoint"])
+tracker = EmissionsTracker(
+    project_name="python-app",
+    save_to_prometheus=True,
+    prometheus_url="http://pushgateway:9091",
+)
 
 with open("./templates/treeCounter.html", "r") as f:
     html_string = f.read()
@@ -19,8 +26,10 @@ html_template = Template(html_string)
 
 
 def fetch_tree_count():
+    tracker.start()
     r = requests.get(trees_api_url) if random.random() > 0.15 else artificial_503()
-    requestCounter.labels(status=r.status_code, endpoint='/upstream').inc()
+    requestCounter.labels(status=r.status_code, endpoint="/upstream").inc()
+    _ = tracker.stop()
     if r.status_code == 200:
         return r.json()["count"]
     return 0
@@ -32,7 +41,7 @@ class HTTPRequestHandler(MetricsHandler):
         self.do_HEAD()
         tree_count = fetch_tree_count()
         bytes_template = bytes(html_template.substitute(counter=tree_count), "utf-8")
-        requestCounter.labels(status='200', endpoint='/treecounter').inc()
+        requestCounter.labels(status="200", endpoint="/treecounter").inc()
         self.wfile.write(bytes_template)
 
     def do_HEAD(self):
@@ -44,7 +53,7 @@ class HTTPRequestHandler(MetricsHandler):
         endpoint = self.path
         if endpoint == "/treecounter":
             return self.get_treecounter()
-        elif endpoint == '/metrics':
+        elif endpoint == "/metrics":
             return super(HTTPRequestHandler, self).do_GET()
         else:
             self.send_error(404)

@@ -1,3 +1,9 @@
+#
+app/emissions.csv
+app/powermetrics_log.txt
+powermetrics_log.txt
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

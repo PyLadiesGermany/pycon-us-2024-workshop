@@ -13,6 +13,11 @@ services:
     volumes:
       - "./prometheus.yaml:/etc/prometheus/prometheus.yml"
 
+  pushgateway:
+    image: prom/pushgateway
+    ports:
+      - "9091:9091"
+
   grafana:
     image: grafana/grafana
     ports:
