@@ -15,10 +15,9 @@ This workshop has been developed for PyCon US 2024 by @Simpcyclassy and @sleepyp
 ---
 WIP
 
-<s>
 ### Objective
 
-In the directory `app/`, we have an application that runs a Python web server with the endpoint `/treecounter`. It displays the total number of trees planted by Ecosia users. We want to start observing the behavior of this application at runtime by tracking and exporting metric data.
+In the directory `app/`, we have an application that runs a Python web server with the endpoint `/carbon_intensity`. It displays the total carbon intensity for a given zone. We want to start observing the behavior of this application at runtime by tracking and exporting metric data.
 
 We will do this using the time-series database system [Prometheus](https://prometheus.io), which uses a "pull" method to extract data from running applications. This means that the applications need to "export" their data, so that Prometheus is able to "scrape" the metric data from them. This is typically done via an HTTP endpoint (`/metrics`, by convention).
 
@@ -29,30 +28,45 @@ We will use the [Prometheus Python client library](https://github.com/prometheus
 * [Section 1: Exposing metrics](#section-1:-exposing-metrics)
 * [Section 2: Creating custom metrics](#section-2:-creating-custom-metrics)
 * [Section 3: Scraping Metrics with Prometheus and creating Dashboards with Grafana](#section-3:-scraping-metrics-with-prometheus-and-creating-dashboards-with-grafana)
+
+* [Troubleshooting](#troubleshooting)
 * [Bonus Material: Histograms in Prometheus](#bonus-material:-histograms-in-prometheus)
 
 ### Prerequisites
 
-For this workshop you will need [Python 3.10](https://installpython3.com/), [Poetry](https://python-poetry.org/docs/#installation), [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) running on your machine. *(on mac os docker-compose is by default installed with Docker)*
+For this workshop you will need [Python 3.11](https://installpython3.com/), [Poetry](https://python-poetry.org/docs/#installation), [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) running on your machine. *(on mac os docker-compose is by default installed with Docker)*
+
+You will also need a free API key for Electricity Map, which you can get by signing up [here](https://api-portal.electricitymaps.com/). This key will be used to get the carbon intensity data for a given zone.
 
 
-Please note that this repository is linted using [black](), [flake8]() and [pycodestyle]() with a max line length of 100. This linting is enforced with github actions configured [here](./github/workflow/lint.yml)
+Please note that this repository is linted using [black](https://pypi.org/project/black/), and [pycodestyle](https://pypi.org/project/pycodestyle/) with a max line length of 100. This linting is enforced with github actions configured [here](./github/workflow/lint.yml)
 
 ## Workshop Content
 
 ---
 
+Before you begin you will need to save your API key in a `.env` file in the root of the project. The file should look like this:
+
+```sh
+
+ELECTRICITY_MAP_API_KEY=your-api-key
+
+```
+
+
 ### Section 1: Exposing metrics ⚙️
 
 ---
 
-For this section, you can use the following command to install depencies and run the dev server locally.
+For this section, you can use the following command to install dependencies and run the dev server locally.
 
 ```sh
 # The Makefile allows us to run commands behind a target name
 # Make is not available for the Windows OS so you will need to copy the commands from the Makefile and run them directly
 make dev
 ```
+
+<s>
 
 To export our metrics we will need to have a server with a handler to *handle* the metrics. We can do this by changing the base class of our HTTPRequestHandler to the `MetricsHandler` provided by the prometheus python client. We also need to add the condition for the `/metrics` endpoint below our `/treecounter` endpoint condition. *(Don't forget to import the `MetricsHandler` from the `prometheus_client`)*
 
