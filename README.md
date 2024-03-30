@@ -170,6 +170,10 @@ Time to get creative and visualize your metrics in a meaningful way so you can o
 
 #### Why
 
+The tech industry is responsible for a significant portion of global carbon emissions. By measuring the carbon emissions of our applications, we can make informed decisions about how to reduce our carbon footprint. This is important for both the environment and for the sustainability of our industry, however, there is often other benefits associated with these changes such as cost savings and performance improvements. As carbon conscientious  developers the first step is knowing the current state of affairs, this where carbon metrics come in.
+
+We will be using the Python library from [Codecarbon](https://codecarbon.io/) to instrument our code just as we have done above and pass out the metrics to Prometheus so we can extend our Dashboards in Grafana to include carbon emissions.
+
 
 #### Codecarbon Quickstart
 
