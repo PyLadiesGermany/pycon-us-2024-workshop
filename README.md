@@ -28,9 +28,10 @@ We will use the [Prometheus Python client library](https://github.com/prometheus
 * [Section 1: Exposing metrics](#section-1:-exposing-metrics)
 * [Section 2: Creating custom metrics](#section-2:-creating-custom-metrics)
 * [Section 3: Scraping Metrics with Prometheus and creating Dashboards with Grafana](#section-3:-scraping-metrics-with-prometheus-and-creating-dashboards-with-grafana)
+* [Section 4: Measuring carbon emissions for our application](#section-4:-measuring-carbon-emissions-for-our-application)
 
-* [Troubleshooting](#troubleshooting)
 * [Bonus Material: Histograms in Prometheus](#bonus-material:-histograms-in-prometheus)
+* [Troubleshooting](#troubleshooting)
 
 ### Prerequisites
 
@@ -68,7 +69,7 @@ make dev
 
 <s>
 
-To export our metrics we will need to have a server with a handler to *handle* the metrics. We can do this by changing the base class of our HTTPRequestHandler to the `MetricsHandler` provided by the prometheus python client. We also need to add the condition for the `/metrics` endpoint below our `/treecounter` endpoint condition. *(Don't forget to import the `MetricsHandler` from the `prometheus_client`)*
+To export our metrics we will need to have a server with a handler to *handle* the metrics. We can do this by changing the base class of our HTTPRequestHandler to the `MetricsHandler` provided by the prometheus python client. We also need to add the condition for the `/metrics` endpoint below our `/carbon_intensity` endpoint condition. *(Don't forget to import the `MetricsHandler` from the `prometheus_client`)*
 
 ``` python
 class HTTPRequestHandler(MetricsHandler):
@@ -78,7 +79,7 @@ class HTTPRequestHandler(MetricsHandler):
         return super(HTTPRequestHandler, self).do_GET()
 ```
 
-Now try restarting the server (`control c` will stop it) and go to `localhost:8001/metrics`. What do you see? What do you see if you visit `localhost:8001/treecounter` a few times and then go back to the `/metrics` endpoint? What do these base metrics represent?
+Now try restarting the server (`control c` will stop it) and go to `localhost:8001/metrics`. What do you see? What do you see if you visit `localhost:8001/carbon_intensity` a few times and then go back to the `/metrics` endpoint? What do these base metrics represent?
 
 ---
 
@@ -105,7 +106,7 @@ requests_total{} 0
 To use our metric in practice, we want to increment the counter when tracking events in our code. To increment the `Counter` type by one, we can call `.inc()` - for example, using the request counter we created above, we could call:
 
 ``` python
-requestCounter.labels(status='200', endpoint='/treecounter').inc()
+requestCounter.labels(status='200', endpoint='/carbon_intensity').inc()
 ```
 
 **You should add these `.inc()` calls in the place in your code where the event you want to track is occurring.** If you want to increment by a different amount than 1, you can for example, use `.inc(1.5)`.
@@ -165,7 +166,7 @@ password: workshop
 
 Time to get creative and visualize your metrics in a meaningful way so you can observe your application and even set up alerts for any behavior you want to be informed about! We will show you in the workshop how to build a simple dashboard panel but there's lots to explore. Lots of useful information can be found on both the [Prometheus](https://prometheus.io) and [Grafana](http://grafana.com) websites.
 
-### Measuring carbon emissions for our application
+### Section 4: Measuring carbon emissions for our application
 
 #### Why
 
@@ -203,13 +204,13 @@ You will start to see metrics from your machine.
 
 If we want to know more about our specific application, and specific operations within it, we can use the `codecarbon` library to instrument our application.
 
-First we need to import the track_emissions from the codecarbon library and call it as a decorator for our `fetch_tree_count()` function.
+First we need to import the track_emissions from the codecarbon library and call it as a decorator for our `fetch_carbon_intensity()` function.
 
 ``` python
 from codecarbon import track_emissions
 
 @track_emissions()
-    def fetch_tree_count():
+    def fetch_carbon_intensity():
 ```
 
 Now let's start everything running again (make sure you have **stopped** it first!)
@@ -313,13 +314,13 @@ Then define our histogram:
 
 ```
   requestHistogram = Histogram('request_latency_seconds', 'Request latency', ['endpoint'] )
-  requestHistogramTreeCounter = requestHistogram.labels(endpoint='/treecounter')
+  requestHistogramCarbonIntensity = requestHistogram.labels(endpoint='/carbon_intensity')
 ```
 
 Finally we add the following decorator to the piece of code that we want to measure the duration for:
 
 ```
-  @requestHistogramTreeCounter.time()
+  @requestHistogramCarbonIntensity.time()
   def xxxx():
       ...
 ```
@@ -331,7 +332,7 @@ Now restart the application and make a few requests. 👀
 If we curl the `/metrics` endpoint again, a portion of the output will look something like this:
 
 ```
-request_latency_seconds_count{endpoint="/treecounter"} 5.0
+request_latency_seconds_count{endpoint="/carbon_intensity"} 5.0
 ```
 
 This is a `count` again! And we can see the endpoint has received 5 requests. 
@@ -340,27 +341,27 @@ We also see our buckets. Here `le` means `less than or equal to`.
 We can see from this output that the histogram is cumulative:
 
 ```
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.005"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.01"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.025"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.05"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.075"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.1"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.25"} 4.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.5"} 4.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.75"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="1.0"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="2.5"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="5.0"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="7.5"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="10.0"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="+Inf"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.005"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.01"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.025"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.05"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.075"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.1"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.25"} 4.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.5"} 4.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.75"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="1.0"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="2.5"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="5.0"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="7.5"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="10.0"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="+Inf"} 5.0
 ```
 
 Finally we see the total sum of all observed values:
 
 ```
-request_latency_seconds_sum{endpoint="/treecounter"} 1.13912788000016
+request_latency_seconds_sum{endpoint="/carbon_intensity"} 1.13912788000016
 ```
 </s>
 To learn more, you can read about [Prometheus Histogram best practices](https://prometheus.io/docs/practices/histograms/).
