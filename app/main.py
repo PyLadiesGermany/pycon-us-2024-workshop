@@ -20,7 +20,7 @@ PORT_NUMBER = 8001
 ELECTRICITY_MAP_API_KEY = getenv("ELECTRICITY_MAP_API_KEY")
 
 # GIVEN ZONE - FEEL FREE TO CHANGE
-ZONE = "DE"
+ZONE = "GB"
 carbon_intensity_url = (
     f"https://api.electricitymap.org/v3/carbon-intensity/latest?zone={ZONE}"
 )
@@ -35,7 +35,7 @@ tracker = EmissionsTracker(
     prometheus_url="http://pushgateway:9091",
 )
 
-with open("./templates/treeCounter.html", "r") as f:
+with open("./templates/carbonIntensity.html", "r") as f:
     html_string = f.read()
 html_template = Template(html_string)
 
@@ -60,7 +60,7 @@ class HTTPRequestHandler(MetricsHandler):
         self.do_HEAD()
         carbon_intensity = fetch_carbon_intensity()
         bytes_template = bytes(
-            html_template.substitute(counter=carbon_intensity), "utf-8"
+            html_template.substitute(counter=carbon_intensity, zone=ZONE), "utf-8"
         )
         requestCounter.labels(status="200", endpoint="/carbon_intensity").inc()
         self.wfile.write(bytes_template)
