@@ -1,4 +1,6 @@
-FROM python:3.10.1-slim-buster
+FROM python:3.11-slim-bullseye
+
+RUN apt-get -y update && apt-get -y install gcc 
 
 RUN pip install poetry
 

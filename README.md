@@ -28,9 +28,10 @@ We will use the [Prometheus Python client library](https://github.com/prometheus
 * [Section 1: Exposing metrics](#section-1:-exposing-metrics)
 * [Section 2: Creating custom metrics](#section-2:-creating-custom-metrics)
 * [Section 3: Scraping Metrics with Prometheus and creating Dashboards with Grafana](#section-3:-scraping-metrics-with-prometheus-and-creating-dashboards-with-grafana)
+* [Section 4: Measuring carbon emissions for our application](#section-4:-measuring-carbon-emissions-for-our-application)
 
-* [Troubleshooting](#troubleshooting)
 * [Bonus Material: Histograms in Prometheus](#bonus-material:-histograms-in-prometheus)
+* [Troubleshooting](#troubleshooting)
 
 ### Prerequisites
 
@@ -68,7 +69,7 @@ make dev
 
 <s>
 
-To export our metrics we will need to have a server with a handler to *handle* the metrics. We can do this by changing the base class of our HTTPRequestHandler to the `MetricsHandler` provided by the prometheus python client. We also need to add the condition for the `/metrics` endpoint below our `/treecounter` endpoint condition. *(Don't forget to import the `MetricsHandler` from the `prometheus_client`)*
+To export our metrics we will need to have a server with a handler to *handle* the metrics. We can do this by changing the base class of our HTTPRequestHandler to the `MetricsHandler` provided by the prometheus python client. We also need to add the condition for the `/metrics` endpoint below our `/carbon_intensity` endpoint condition. *(Don't forget to import the `MetricsHandler` from the `prometheus_client`)*
 
 ``` python
 class HTTPRequestHandler(MetricsHandler):
@@ -78,7 +79,7 @@ class HTTPRequestHandler(MetricsHandler):
         return super(HTTPRequestHandler, self).do_GET()
 ```
 
-Now try restarting the server (`control c` will stop it) and go to `localhost:8001/metrics`. What do you see? What do you see if you visit `localhost:8001/treecounter` a few times and then go back to the `/metrics` endpoint? What do these base metrics represent?
+Now try restarting the server (`control c` will stop it) and go to `localhost:8001/metrics`. What do you see? What do you see if you visit `localhost:8001/carbon_intensity` a few times and then go back to the `/metrics` endpoint? What do these base metrics represent?
 
 ---
 
@@ -105,7 +106,7 @@ requests_total{} 0
 To use our metric in practice, we want to increment the counter when tracking events in our code. To increment the `Counter` type by one, we can call `.inc()` - for example, using the request counter we created above, we could call:
 
 ``` python
-requestCounter.labels(status='200', endpoint='/treecounter').inc()
+requestCounter.labels(status='200', endpoint='/carbon_intensity').inc()
 ```
 
 **You should add these `.inc()` calls in the place in your code where the event you want to track is occurring.** If you want to increment by a different amount than 1, you can for example, use `.inc(1.5)`.
@@ -165,6 +166,116 @@ password: workshop
 
 Time to get creative and visualize your metrics in a meaningful way so you can observe your application and even set up alerts for any behavior you want to be informed about! We will show you in the workshop how to build a simple dashboard panel but there's lots to explore. Lots of useful information can be found on both the [Prometheus](https://prometheus.io) and [Grafana](http://grafana.com) websites.
 
+### Section 4: Measuring carbon emissions for our application
+
+#### Why
+
+The tech industry is responsible for a significant portion of global carbon emissions. By measuring the carbon emissions of our applications, we can make informed decisions about how to reduce our carbon footprint. This is important for both the environment and for the sustainability of our industry, however, there is often other benefits associated with these changes such as cost savings and performance improvements. As carbon conscientious  developers the first step is knowing the current state of affairs, this where carbon metrics come in.
+
+We will be using the Python library from [Codecarbon](https://codecarbon.io/) to instrument our code just as we have done above and pass out the metrics to Prometheus so we can extend our Dashboards in Grafana to include carbon emissions.
+
+
+#### Codecarbon Quickstart
+
+```sh
+# In a new terminal window from the root of the repository
+# Make sure the app is not already running elsewhere!!
+make dev
+
+# In a new terminal window from the root of the repository
+make codecarbon-init
+# This will write an experiment id into the .codecarbon.config at the root level of the repository
+make codecarbon-monitor
+# You may have to put in your password to allow codecarbon to access your machine's hardware
+```
+
+##### Codecarbon Output
+
+You will start to see metrics from your machine.
+
+```sh
+[codecarbon DEBUG @ 20:34:14] _get_power_from_cpus - DONT MATCH CPU Power : 0.5262
+[codecarbon DEBUG @ 20:34:14] _get_power_from_cpus - DONT MATCH CPU Energy Delta : 0.5262
+[codecarbon DEBUG @ 20:34:14] _get_power_from_cpus - MATCH GPU Power : 0.0131
+[codecarbon DEBUG @ 20:34:14] _get_power_from_cpus - DONT MATCH GPU Energy Delta : 0.0131
+[codecarbon DEBUG @ 20:34:14] AppleSiliconChip : 0.01 W during 6.75 s [measurement time: 1.6425]
+[codecarbon INFO @ 20:34:14] 0.000144 kWh of electricity used since the beginning.
+[codecarbon DEBUG @ 20:34:14] last_duration=3.4494149684906006
+```
+
+
+#### How to measure specific parts of our code
+
+If we want to know more about our specific application, and specific operations within it, we can use the `codecarbon` library to instrument our application.
+
+First we need to import the track_emissions from the codecarbon library and call it as a decorator for our `fetch_carbon_intensity()` function.
+
+``` python
+from codecarbon import track_emissions
+
+@track_emissions()
+    def fetch_carbon_intensity():
+```
+
+Now let's start everything running again (make sure you have **stopped** it first!)
+
+```sh
+# In a new terminal window from the root of the repository
+# Make sure the app is not already running elsewhere!!
+make dev
+
+# Now visit your app's page, if it will not load, you need to go back to the terminal and enter your password to allow codecarbon to track your machines hardware
+```
+
+Refresh the page a couple of times, you will see the logs for your metrics and a new file `emissions.csv`has been created.
+
+##### Visualising our metrics with Codecarbon
+
+In a new terminal run the following:
+
+```sh
+make codecarbon-report
+```
+
+Then open [http://127.0.0.1:3333/](http://127.0.0.1:3333/) in your browser to see the Codecarbon dashboard. Note that the dashboard will not update and only contain the metrics up until when you ran the command.
+
+TODO: some notes on the dashboard
+
+
+#### Passing our metrics to Prometheus so we can visualise them in Grafana
+
+To have a more complete view of our application, we can pass the metrics to Prometheus and add them to our dashboard (or start a new one) in Grafana.
+
+First stop the app if it is running and update your tracker:
+
+```
+tracker = EmissionsTracker(
+    project_name="python-app",
+    save_to_prometheus=True,
+    prometheus_url="http://pushgateway:9091",
+)
+```
+
+We will need to run the app via `docker-compose up --build` this will also run our instance of Prometheus, Grafana and in addition a Prometheus Gateway.
+
+First go to your app's endpoint in the browser and run it a few times so that you generate metrics.
+
+Next go to Grafana at [http://localhost:3000/](http://localhost:3000/) and go to the explore tab. Here you can write a query to see your metrics. For example, you can write `codecarbon_` to see the autocomplete options for the metrics from your app.
+
+Finally, you can add these metrics to your dashboard by clicking the `+` button and selecting `Add Panel` and then `Add Query`. Here you can write your query and then click `Apply` to see your metrics on your dashboard. Try the query below to see your emissions being charted, go back to your application endpoint and run it again a few more times, then refresh the dashboard to see the change.
+
+```
+avg(rate(codecarbon_emissions[$__range])) by (project_name)
+```
+
+
+###### Prometheus Gateway
+
+The Prometheus Gateway is a separate service that is used to collect metrics from multiple sources and then push them to Prometheus. This is useful when you have multiple services running and you want to collect metrics from all of them in one place. It is also useful when the application you are running doesn't have a server for which you can run Prometheus for (such as cron jobs or in our case the tracker)
+
+
+
+
 ✨ **Go forth and Monitor!!** ✨
 
 ---
@@ -207,13 +318,13 @@ Then define our histogram:
 
 ```
   requestHistogram = Histogram('request_latency_seconds', 'Request latency', ['endpoint'] )
-  requestHistogramTreeCounter = requestHistogram.labels(endpoint='/treecounter')
+  requestHistogramCarbonIntensity = requestHistogram.labels(endpoint='/carbon_intensity')
 ```
 
 Finally we add the following decorator to the piece of code that we want to measure the duration for:
 
 ```
-  @requestHistogramTreeCounter.time()
+  @requestHistogramCarbonIntensity.time()
   def xxxx():
       ...
 ```
@@ -225,7 +336,7 @@ Now restart the application and make a few requests. 👀
 If we curl the `/metrics` endpoint again, a portion of the output will look something like this:
 
 ```
-request_latency_seconds_count{endpoint="/treecounter"} 5.0
+request_latency_seconds_count{endpoint="/carbon_intensity"} 5.0
 ```
 
 This is a `count` again! And we can see the endpoint has received 5 requests. 
@@ -234,27 +345,27 @@ We also see our buckets. Here `le` means `less than or equal to`.
 We can see from this output that the histogram is cumulative:
 
 ```
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.005"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.01"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.025"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.05"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.075"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.1"} 1.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.25"} 4.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.5"} 4.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="0.75"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="1.0"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="2.5"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="5.0"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="7.5"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="10.0"} 5.0
-request_latency_seconds_bucket{endpoint="/treecounter",le="+Inf"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.005"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.01"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.025"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.05"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.075"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.1"} 1.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.25"} 4.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.5"} 4.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="0.75"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="1.0"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="2.5"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="5.0"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="7.5"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="10.0"} 5.0
+request_latency_seconds_bucket{endpoint="/carbon_intensity",le="+Inf"} 5.0
 ```
 
 Finally we see the total sum of all observed values:
 
 ```
-request_latency_seconds_sum{endpoint="/treecounter"} 1.13912788000016
+request_latency_seconds_sum{endpoint="/carbon_intensity"} 1.13912788000016
 ```
 </s>
 To learn more, you can read about [Prometheus Histogram best practices](https://prometheus.io/docs/practices/histograms/).
@@ -275,8 +386,12 @@ Check you terminal windows to see if you can find where it is running and use `c
 
 ### Python version
 
-If the App will not start locally and you receive an error referring the version, it may be because you do not have a suitable version of Python available on your machine. The version should be 3.10 or above.
+If the App will not start locally and you receive an error referring the version, it may be because you do not have a suitable version of Python available on your machine. The version should be 3.11 or above.
 
----
+### Latency when using the Codecarbon tracker
 
-The latest version of this material has been developed by @vinesse @sleepypioneer with previous iterations supported by @emilywoods @jasongwartz.
+If you are experiencing latency when using the Codecarbon tracker, ....
+
+### Pandas error from Codecarbon library
+
+TODO: fill in
