@@ -11,6 +11,7 @@ from util import artificial_503, artificial_latency
 
 # load environment variables from .env file
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -32,6 +33,7 @@ tracker = EmissionsTracker(
     project_name="python-app",
     save_to_prometheus=True,
     prometheus_url="http://pushgateway:9091",
+)
 
 with open("./templates/treeCounter.html", "r") as f:
     html_string = f.read()
