@@ -20,7 +20,7 @@ PORT_NUMBER = 8001
 ELECTRICITY_MAP_API_KEY = getenv("ELECTRICITY_MAP_API_KEY")
 
 # GIVEN ZONE - FEEL FREE TO CHANGE
-ZONE = "GB"
+ZONE = "DE"
 carbon_intensity_url = (
     f"https://api.electricitymap.org/v3/carbon-intensity/latest?zone={ZONE}"
 )
