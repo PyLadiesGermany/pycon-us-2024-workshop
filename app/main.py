@@ -82,6 +82,12 @@ class HTTPRequestHandler(MetricsHandler):
         endpoint = self.path
         if endpoint == "/carbon_intensity":
             return self.get_carbon_intensity()
+        elif endpoint == "/background_image":
+            with open("./templates/forest-background.jpg", "rb") as f:
+                self.send_response(200)
+                self.send_header("Content-type", "image/jpg")
+                self.end_headers()
+                self.wfile.write(f.read())
         elif endpoint == "/metrics":
             return super(HTTPRequestHandler, self).do_GET()
         else:
