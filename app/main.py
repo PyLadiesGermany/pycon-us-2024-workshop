@@ -5,7 +5,7 @@ import time
 from codecarbon import EmissionsTracker
 from os import getenv
 from http.server import HTTPServer
-from prometheus_client import MetricsHandler, Counter
+from prometheus_client import MetricsHandler, Counter, Histogram
 from string import Template
 from util import artificial_503, artificial_latency
 
@@ -28,6 +28,12 @@ carbon_intensity_url = (
 requestCounter = Counter(
     "requests_total", "total number of requests", ["status", "endpoint"]
 )
+
+# Prometheus histogram to track latency of requests
+requestHistogram = Histogram("request_latency_seconds", "Request latency", ["endpoint"])
+requestHistogramCarbonIntensity = requestHistogram.labels(endpoint="/carbon_intensity")
+
+
 # Tracker for carbon emissions
 tracker = EmissionsTracker(
     project_name="python-app",
@@ -55,6 +61,7 @@ def fetch_carbon_intensity():
 
 
 class HTTPRequestHandler(MetricsHandler):
+    @requestHistogramCarbonIntensity.time()
     @artificial_latency
     def get_carbon_intensity(self):
         self.do_HEAD()
@@ -68,6 +75,7 @@ class HTTPRequestHandler(MetricsHandler):
     def do_HEAD(self):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
+
         self.end_headers()
 
     def do_GET(self):

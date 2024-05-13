@@ -8,8 +8,9 @@ COPY ./pyproject.toml /
 COPY ./poetry.lock /
 RUN poetry install
 
-COPY ./app /python_server
+COPY .env  /app/.env
+COPY ./app /app
 
-WORKDIR /python_server
+WORKDIR /app
 EXPOSE 8001
 CMD ["poetry", "run", "python", "main.py"]

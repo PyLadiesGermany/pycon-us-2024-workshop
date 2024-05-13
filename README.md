@@ -10,11 +10,9 @@ By attending this workshop, you’ll gain valuable insights and hands-on experie
 
 Join us in this journey towards a more sustainable future in tech and a better planet for everyone.
 
-This workshop has been developed for PyCon US 2024 by @Simpcyclassy and @sleepypioneer. It is developed on top of iterations of this material by @Vinesse, @emilywoods, and originally developed by @jasongwartz and @sleepypioneer.
+This workshop has been developed for PyCon US 2024 by @Simpcyclassy and @sleepypioneer. It is developed on top of iterations of this material by @Vinesse, @emilywoods, which was originally developed by @jasongwartz and @sleepypioneer.
 
 ---
-WIP
-
 ### Objective
 
 In the directory `app/`, we have an application that runs a Python web server with the endpoint `/carbon_intensity`. It displays the total carbon intensity for a given zone. We want to start observing the behavior of this application at runtime by tracking and exporting metric data.
@@ -53,7 +51,7 @@ Please note that this repository is linted using [black](https://pypi.org/projec
 
 ---
 
-Before you begin you will need to save your API key in a `.env` file in the root of the project. The file should look like this:
+🛑 Before you begin you will need to save your API key in a `.env` file in the root of the project. The file should look like this:
 
 ```sh
 
@@ -70,11 +68,11 @@ For this section, you can use the following command to install dependencies and 
 
 ```sh
 # The Makefile allows us to run commands behind a target name
-# Make is not available for the Windows OS so you will need to copy the commands from the Makefile and run them directly
+# Make is not available for the Windows OS so you will need to copy the commands from the Makefile and run them directly ie `cd app && poetry run python main.py`
 make dev
 ```
 
-<s>
+This command will start a python server which will have the endpoint `/carbon_intensity` available for the hard coded zone (you can change this in the code if you like). The server will be running on `localhost:8001/carbon_intensity` and display the current carbon intensity for that zone.
 
 To export our metrics we will need to have a server with a handler to *handle* the metrics. We can do this by changing the base class of our HTTPRequestHandler to the `MetricsHandler` provided by the prometheus python client. We also need to add the condition for the `/metrics` endpoint below our `/carbon_intensity` endpoint condition. *(Don't forget to import the `MetricsHandler` from the `prometheus_client`)*
 
@@ -119,6 +117,14 @@ requestCounter.labels(status='200', endpoint='/carbon_intensity').inc()
 **You should add these `.inc()` calls in the place in your code where the event you want to track is occurring.** If you want to increment by a different amount than 1, you can for example, use `.inc(1.5)`.
 
 Add the call to `inc()` in your code. Try experiment with the placement of where you call it, what difference does it make to your metric?
+
+
+#### Already finished?
+
+How about creating a custom metric to measure the latency of your requests? You might consider a histogram for this as it splits the latency into buckets. You'll find some more information on histograms in the [bonus material](#bonus-material:-histograms-in-prometheus) at the bottom of this page.
+
+
+
 
 ---
 
@@ -167,7 +173,7 @@ rate(requests_total[1m])
 Grafana uses authentication, which, for this workshop, is configured in the `docker-compose.yaml` file. The credentials configured for this workshop are:
 
 ```
-username: ecosia
+username: pycon2024
 password: workshop
 ```
 
@@ -221,6 +227,118 @@ from codecarbon import track_emissions
 
 @track_emissions()
     def fetch_carbon_intensity():
+```
+
+Now let's start everything running again (make sure you have **stopped** it first!)
+
+```sh
+# In a new terminal window from the root of the repository
+# Make sure the app is not already running elsewhere!!
+make dev
+
+# Now visit your app's page, if it will not load, you need to go back to the terminal and enter your password to allow codecarbon to track your machines hardware
+```
+
+Refresh the page a couple of times, you will see the logs for your metrics and a new file `emissions.csv`has been created.
+
+##### Visualising our metrics with Codecarbon
+
+In a new terminal run the following:
+
+```sh
+make codecarbon-report
+```
+
+Then open [http://127.0.0.1:3333/](http://127.0.0.1:3333/) in your browser to see the Codecarbon dashboard. Note that the dashboard will not update and only contain the metrics up until when you ran the command.
+
+<img src="./imgs/codecarbon-dashboard.png" alt="screenshot of the dashboard" width="800">
+
+You will see that our application produces such a small amount currently that it doesn't register much on this dashboard. However, as you scale your application and add more features, you will see this number increase. This is a great way to keep track of the impact of your code on the environment and also see how it compares to other emission activities.
+
+
+#### Passing our metrics to Prometheus so we can visualise them in Grafana
+
+To have a more complete view of our application, we can pass the metrics to Prometheus and add them to our dashboard (or start a new one) in Grafana.
+
+First stop the app if it is running and update your tracker:
+
+```
+tracker = EmissionsTracker(
+    project_name="python-app",
+    save_to_prometheus=True,
+    prometheus_url="http://pushgateway:9091",
+)
+```
+
+We will need to run the app via `docker-compose up --build` this will also run our instance of Prometheus, Grafana and in addition a Prometheus Gateway.
+
+First go to your app's endpoint in the browser and run it a few times so that you generate metrics.
+
+Next go to Grafana at [http://localhost:3000/](http://localhost:3000/) and go to the explore tab. Here you can write a query to see your metrics. For example, you can write `codecarbon_` to see the autocomplete options for the metrics from your app.
+
+Finally, you can add these metrics to your dashboard by clicking the `+` button and selecting `Add Panel` and then `Add Query`. Here you can write your query and then click `Apply` to see your metrics on your dashboard. Try the query below to see your emissions being charted, go back to your application endpoint and run it again a few more times, then refresh the dashboard to see the change.
+
+```
+avg(rate(codecarbon_emissions[$__range])) by (project_name)
+```
+
+
+###### Prometheus Gateway
+
+The Prometheus Gateway is a separate service that is used to collect metrics from multiple sources and then push them to Prometheus. This is useful when you have multiple services running and you want to collect metrics from all of them in one place. It is also useful when the application you are running doesn't have a server for which you can run Prometheus for (such as cron jobs or in our case the tracker)
+
+
+
+
+### Section 4: Carbon Conscientious Development 🌍
+#### Why
+
+The tech industry is responsible for a significant portion of global carbon emissions. By measuring the carbon emissions of our applications, we can make informed decisions about how to reduce our carbon footprint. This is important for both the environment and for the sustainability of our industry, however, there is often other benefits associated with these changes such as cost savings and performance improvements. As carbon conscientious  developers the first step is knowing the current state of affairs, this where carbon metrics come in.
+
+We will be using the Python library from [Codecarbon](https://codecarbon.io/) to instrument our code just as we have done above and pass out the metrics to Prometheus so we can extend our Dashboards in Grafana to include carbon emissions.
+
+
+#### Codecarbon Quickstart
+
+```sh
+# In a new terminal window from the root of the repository
+# Make sure the app is not already running elsewhere!!
+make dev
+
+# In a new terminal window from the root of the repository
+make codecarbon-init
+# This will write an experiment id into the .codecarbon.config at the root level of the repository
+make codecarbon-monitor
+# You may have to put in your computer's password to allow codecarbon to access your machine's hardware
+```
+
+##### Codecarbon Output
+
+You will start to see metrics from your machine.
+
+```sh
+[codecarbon DEBUG @ 20:34:14] _get_power_from_cpus - DONT MATCH CPU Power : 0.5262
+[codecarbon DEBUG @ 20:34:14] _get_power_from_cpus - DONT MATCH CPU Energy Delta : 0.5262
+[codecarbon DEBUG @ 20:34:14] _get_power_from_cpus - MATCH GPU Power : 0.0131
+[codecarbon DEBUG @ 20:34:14] _get_power_from_cpus - DONT MATCH GPU Energy Delta : 0.0131
+[codecarbon DEBUG @ 20:34:14] AppleSiliconChip : 0.01 W during 6.75 s [measurement time: 1.6425]
+[codecarbon INFO @ 20:34:14] 0.000144 kWh of electricity used since the beginning.
+[codecarbon DEBUG @ 20:34:14] last_duration=3.4494149684906006
+```
+
+
+#### How to measure specific parts of our code
+
+If we want to know more about our specific application, and specific operations within it, we can use the `codecarbon` library to instrument our application.
+
+First we need to import the track_emissions from the codecarbon library and call it as a decorator for our `fetch_carbon_intensity()` function.
+
+``` python
+from codecarbon import track_emissions
+
+@track_emissions()
+def fetch_carbon_intensity():
+  ...
 ```
 
 Now let's start everything running again (make sure you have **stopped** it first!)
@@ -485,7 +603,7 @@ Finally we see the total sum of all observed values:
 ```
 request_latency_seconds_sum{endpoint="/carbon_intensity"} 1.13912788000016
 ```
-</s>
+
 To learn more, you can read about [Prometheus Histogram best practices](https://prometheus.io/docs/practices/histograms/).
 
 ---
