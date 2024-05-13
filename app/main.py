@@ -21,13 +21,9 @@ ELECTRICITY_MAP_API_KEY = getenv("ELECTRICITY_MAP_API_KEY")
 
 # GIVEN ZONE - FEEL FREE TO CHANGE
 ZONE = "DE"
-carbon_intensity_url = (
-    f"https://api.electricitymap.org/v3/carbon-intensity/latest?zone={ZONE}"
-)
+carbon_intensity_url = f"https://api.electricitymap.org/v3/carbon-intensity/latest?zone={ZONE}"
 # Prometheus counter to count number of requests by status and endpoint
-requestCounter = Counter(
-    "requests_total", "total number of requests", ["status", "endpoint"]
-)
+requestCounter = Counter("requests_total", "total number of requests", ["status", "endpoint"])
 
 # Prometheus histogram to track latency of requests
 requestHistogram = Histogram("request_latency_seconds", "Request latency", ["endpoint"])

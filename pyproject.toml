@@ -14,12 +14,19 @@ codecarbon = "^2.3.4"
 python-dotenv = "^1.0.1"
 
 [tool.poetry.dev-dependencies]
-black = "^22.3.0"
-pycodestyle = "^2.8.0"
-flake8 = "^4.0.1"
-dash = "^2.16.0"
-dash-bootstrap-components = "^1.5.0"
-fire = "^0.5.0"
+ruff = "^0.4.4"
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

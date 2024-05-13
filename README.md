@@ -45,7 +45,7 @@ For this workshop you will need [Python 3.11](https://installpython3.com/), [Poe
 You will also need a free API key for Electricity Map, which you can get by signing up [here](https://api-portal.electricitymaps.com/). This key will be used to get the carbon intensity data for a given zone.
 
 
-Please note that this repository is linted using [black](https://pypi.org/project/black/), and [pycodestyle](https://pypi.org/project/pycodestyle/) with a max line length of 100. This linting is enforced with github actions configured [here](./github/workflow/lint.yml)
+Please note that this repository is linted and formatted using [ruff](https://pypi.org/project/black/) with a max line length of 100. This linting is enforced with github actions configured [here](./github/workflow/lint.yml)
 
 ## Workshop Content
 
