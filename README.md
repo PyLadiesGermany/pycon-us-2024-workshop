@@ -178,7 +178,7 @@ password: workshop
 ```
 
 Time to get creative and visualize your metrics in a meaningful way so you can observe your application and even set up alerts for any behavior you want to be informed about! We will show you in the workshop how to build a simple dashboard panel but there's lots to explore. Lots of useful information can be found on both the [Prometheus](https://prometheus.io) and [Grafana](http://grafana.com) websites.
-</s>
+
 ### Section 4: Carbon Conscientious Development 🌍
 #### Why
 
@@ -394,12 +394,9 @@ Finally, you can add these metrics to your dashboard by clicking the `+` button 
 avg(rate(codecarbon_emissions[$__range])) by (project_name)
 ```
 
-
 ###### Prometheus Gateway
 
 The Prometheus Gateway is a separate service that is used to collect metrics from multiple sources and then push them to Prometheus. This is useful when you have multiple services running and you want to collect metrics from all of them in one place. It is also useful when the application you are running doesn't have a server for which you can run Prometheus for (such as cron jobs or in our case the tracker)
-
-
 
 
 ### Section 4: Measuring carbon emissions for our application
@@ -513,7 +510,8 @@ The Prometheus Gateway is a separate service that is used to collect metrics fro
 
 
 ✨ **Go forth and Monitor!!** ✨
-<s>
+
+
 ---
 
 ### Bonus Material: Histograms in Prometheus 📊
@@ -624,15 +622,9 @@ Check you terminal windows to see if you can find where it is running and use `c
 
 If the App will not start locally and you receive an error referring the version, it may be because you do not have a suitable version of Python available on your machine. The version should be 3.11 or above.
 
-### Latency when using the Codecarbon tracker
-
-If you are experiencing latency when using the Codecarbon tracker, ....
-
-### Pandas error from Codecarbon library
-
-TODO: fill in
-
 ### Requests error from Codecarbon library
+
+Occasionally you may see an error from the Codecarbon library that looks like this:
 
 ```sh
 [codecarbon ERROR @ 10:24:56] <urlopen error [Errno 8] nodename nor servname provided, or not known>
