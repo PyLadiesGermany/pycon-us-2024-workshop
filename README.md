@@ -32,7 +32,7 @@ We will use the [Prometheus Python client library](https://github.com/prometheus
 * [Section 3: Inspecting metrics with Prometheus & Grafana](#section-3-scraping-metrics-with-prometheus-and-creating-dashboards-with-grafana)
   * [Challenge 3: Query your metric with PromQL](#challenge-3-query-your-metric-with-promql)
   * [Challenge 4: Create a Grafana Dashboard](#challenge-4-create-a-grafana-dashboard)
-* [Section 4: Carbon Conscionsious Development](#section-4-measuring-carbon-emissions-for-our-application)
+* [Section 4: Carbon Conscionsious Development](#section-4-carbon-conscientious-development)
   * [Challenge 5: Measure carbon emissions for our application](#challenge-5-measure-carbon-emissions-for-our-application)
   * [Challenge 6: Adding our carbon metrics to our Grafana Dashboard](#challenge-6-adding-our-carbon-metrics-to-our-grafana-dashboard)
 * [Bonus Material: Histograms in Prometheus](#bonus-material-histograms-in-prometheus)
