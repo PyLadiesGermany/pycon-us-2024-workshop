@@ -4,7 +4,7 @@ import time
 
 from os import getenv
 from http.server import HTTPServer
-from prometheus_client import MetricsHandler
+from prometheus_client import MetricsHandler, Counter, Histogram
 from string import Template
 from util import artificial_503, artificial_latency
 
@@ -23,6 +23,14 @@ ZONE = "DE"
 carbon_intensity_url = (
     f"https://api.electricitymap.org/v3/carbon-intensity/latest?zone={ZONE}"
 )
+# Prometheus counter to count number of requests by status and endpoint
+requestCounter = Counter(
+    "requests_total", "total number of requests", ["status", "endpoint"]
+)
+
+# Prometheus histogram to track latency of requests
+requestHistogram = Histogram("request_latency_seconds", "Request latency", ["endpoint"])
+requestHistogramCarbonIntensity = requestHistogram.labels(endpoint="/carbon_intensity")
 
 with open("./templates/carbonIntensity.html", "r") as f:
     html_string = f.read()
@@ -35,12 +43,14 @@ def fetch_carbon_intensity():
         if random.random() > 0.15
         else artificial_503()
     )
+    requestCounter.labels(status=r.status_code, endpoint="/upstream").inc()
     if r.status_code == 200:
         return r.json()["carbonIntensity"]
     return 0
 
 
 class HTTPRequestHandler(MetricsHandler):
+    @requestHistogramCarbonIntensity.time()
     @artificial_latency
     def get_carbon_intensity(self):
         self.do_HEAD()
@@ -48,6 +58,7 @@ class HTTPRequestHandler(MetricsHandler):
         bytes_template = bytes(
             html_template.substitute(counter=carbon_intensity, zone=ZONE), "utf-8"
         )
+        requestCounter.labels(status="200", endpoint="/carbon_intensity").inc()
         self.wfile.write(bytes_template)
 
     def do_HEAD(self):
