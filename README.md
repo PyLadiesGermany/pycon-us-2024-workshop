@@ -1,4 +1,4 @@
-# Monitoring carbon emissions: making the impact of your python code visible 🏭 📈
+# Monitoring carbon emissions: making the impact of your Python code visible 🏭 📈
 
 *“If the Internet was a country, it would be the 4th largest polluter”*  [[1](https://www.sustainablewebmanifesto.com/#citation)] The power to make impactful change through technology has never been greater. Doing so starts with understanding the problem space. Our workshop will guide you through the process of quantifying the emissions of your Python code and integrating this awareness into your monitoring strategy.
 
@@ -23,29 +23,35 @@ We will use the [Prometheus Python client library](https://github.com/prometheus
 
 ### Agenda
 
-* [Introduction: What is Monitoring and Why is it important?]()
-* [Using this repository & prerequisites]()
-* [Section 1: Exposing metrics](#section-1:-exposing-metrics)
-  * [Challenge 1: Expose base app metrics on /metrics endpoint]()
-* [Section 2: Creating custom metrics](#section-2:-creating-custom-metrics)
-  * [Challenge 2: Expose base app metrics on /metrics endpoint]()
-* [Section 3: Inspecting metrics with Prometheus & Grafana](#section-3:-scraping-metrics-with-prometheus-and-creating-dashboards-with-grafana)
-  * [Challenge 3: Query your metric with PromQL]()
-    * [Challenge 4: Create a Grafana Dashboard]()
-* [Section 4: Carbon Conscionsious Development](#section-4:-measuring-carbon-emissions-for-our-application)
-  * [Challenge 5: Measure carbon emissions for our application]()
-  * [Challenge 6: Adding our carbon metrics to our Grafana Dashboard]()
-* [Bonus Material: Histograms in Prometheus](#bonus-material:-histograms-in-prometheus)
+* [Introduction: What is Monitoring and Why is it important?](#what-is-monitoring-why-is-it-important)
+* [Prerequisites](#prerequisites)
+* [Section 1: Exposing metrics](#section-1-exposing-metrics)
+  * [Challenge 1: Expose base app metrics on /metrics endpoint](#challenge-1-expose-base-app-metrics-on-the-metrics-endpoint)
+* [Section 2: Creating custom metrics](#section-2-creating-custom-metrics)
+  * [Challenge 2: Create a custom metric](#challenge-2-create-a-custom-metric)
+* [Section 3: Inspecting metrics with Prometheus & Grafana](#section-3-scraping-metrics-with-prometheus-and-creating-dashboards-with-grafana)
+  * [Challenge 3: Query your metric with PromQL](#challenge-3-query-your-metric-with-promql)
+  * [Challenge 4: Create a Grafana Dashboard](#challenge-4-create-a-grafana-dashboard)
+* [Section 4: Carbon Conscionsious Development](#section-4-measuring-carbon-emissions-for-our-application)
+  * [Challenge 5: Measure carbon emissions for our application](#challenge-5-measure-carbon-emissions-for-our-application)
+  * [Challenge 6: Adding our carbon metrics to our Grafana Dashboard](#challenge-6-adding-our-carbon-metrics-to-our-grafana-dashboard)
+* [Bonus Material: Histograms in Prometheus](#bonus-material-histograms-in-prometheus)
 * [Troubleshooting](#troubleshooting)
+
+## Introduction
+### What is monitoring? Why is it important?
+
+Monitoring is the process of observing and measuring the performance of a system, process, or application. It is used to track the health of a system, identify issues, and make informed decisions about how to improve the system. Monitoring is essential for ensuring that a system is running smoothly and efficiently, and for identifying and addressing any problems that may arise. It is also important for tracking the performance of a system over time, and for identifying trends and patterns that may indicate areas for improvement.
+
 
 ### Prerequisites
 
 For this workshop you will need [Python 3.11](https://installpython3.com/), [Poetry](https://python-poetry.org/docs/#installation), [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) running on your machine. *(on mac os docker-compose is by default installed with Docker)*
 
-You will also need a free API key for Electricity Map, which you can get by signing up [here](https://api-portal.electricitymaps.com/). This key will be used to get the carbon intensity data for a given zone.
+You will also need a free API key for Electricity Map, which you can get by signing up [on their website](https://api-portal.electricitymaps.com/). This key will be used to get the carbon intensity data for a given zone.
 
 
-Please note that this repository is linted and formatted using [ruff](https://pypi.org/project/black/) with a max line length of 100. This linting is enforced with github actions configured [here](./github/workflow/lint.yml)
+Please note that this repository is linted and formatted using [ruff](https://pypi.org/project/black/) with a max line length of 100. This linting is enforced with github actions configured [in the .github/workflow/lint.yml file](./github/workflow/lint.yml)
 
 ## Workshop Content
 
@@ -59,7 +65,7 @@ ELECTRICITY_MAP_API_KEY=your-api-key
 
 ```
 
-### Section 1: Exposing metrics ⚙️
+### Section 1 Exposing metrics
 
 ---
 
@@ -71,9 +77,9 @@ For this section, you can use the following command to install dependencies and 
 make dev
 ```
 
-This command will start a python server which will have the endpoint `/carbon_intensity` available for the hard coded zone (you can change this in the code if you like). The server will be running on `localhost:8001/carbon_intensity` and display the current carbon intensity for that zone.
+This command will start a Python server which will have the endpoint `/carbon_intensity` available for the hard coded zone (you can change this in the code if you like). The server will be running on `localhost:8001/carbon_intensity` and display the current carbon intensity for that zone.
 
-To export our metrics we will need to have a server with a handler to *handle* the metrics. We can do this by changing the base class of our HTTPRequestHandler to the `MetricsHandler` provided by the prometheus python client. We also need to add the condition for the `/metrics` endpoint below our `/carbon_intensity` endpoint condition. *(Don't forget to import the `MetricsHandler` from the `prometheus_client`)*
+To export our metrics we will need to have a server with a handler to *handle* the metrics. We can do this by changing the base class of our HTTPRequestHandler to the `MetricsHandler` provided by the Prometheus Python client. We also need to add the condition for the `/metrics` endpoint below our `/carbon_intensity` endpoint condition. *(Don't forget to import the `MetricsHandler` from the `prometheus_client`)*
 
 ``` python
 class HTTPRequestHandler(MetricsHandler):
@@ -82,12 +88,13 @@ class HTTPRequestHandler(MetricsHandler):
     elif endpoint == '/metrics':
         return super(HTTPRequestHandler, self).do_GET()
 ```
+#### Challenge 1 Expose base app metrics on the metrics endpoint
 
-Now try restarting the server (`control c` will stop it) and go to `localhost:8001/metrics`. What do you see? What do you see if you visit `localhost:8001/carbon_intensity` a few times and then go back to the `/metrics` endpoint? What do these base metrics represent?
+Implement the above changes in the `main.py` file. Now try restarting the server (`control c` will stop it) and go to `localhost:8001/metrics`. What do you see? What do you see if you visit `localhost:8001/carbon_intensity` a few times and then go back to the `/metrics` endpoint? What do these base metrics represent?
 
 ---
 
-### Section 2: Creating custom metrics 🔧
+### Section 2 Creating custom metrics
 
 ---
 
@@ -115,22 +122,25 @@ requestCounter.labels(status='200', endpoint='/carbon_intensity').inc()
 
 **You should add these `.inc()` calls in the place in your code where the event you want to track is occurring.** If you want to increment by a different amount than 1, you can for example, use `.inc(1.5)`.
 
+
+##### Challenge 2 Create a custom metric
+
 Add the call to `inc()` in your code. Try experiment with the placement of where you call it, what difference does it make to your metric?
 
 
-#### Already finished?
+##### Already finished?
 
-How about creating a custom metric to measure the latency of your requests? You might consider a histogram for this as it splits the latency into buckets. You'll find some more information on histograms in the [bonus material](#bonus-material:-histograms-in-prometheus) at the bottom of this page.
+How about creating a custom metric to measure the latency of your requests? You might consider a histogram for this as it splits the latency into buckets. You'll find some more information on histograms in the [bonus material](#bonus-material-histograms-in-prometheus) at the bottom of this page.
 
 ---
 
-### Section 3: Scraping Metrics with Prometheus and creating Dashboards with Grafana 🔥📈
+### Section 3 Scraping Metrics with Prometheus and creating Dashboards with Grafana
 
 ---
 
 So far we've been able to instrument our application, such that it is now exporting metrics about its runtime behavior. However, we still need to collect those metrics and store the data in a way so we can query it back out in order to graph it over time and make dashboards.
 
-There is a `prometheus.yaml` configuration file here in the repo, which is already set up to scrape metrics from our application. We will run our application, Prometheus, and Grafana inside Docker, so that they are easily able to find each other.
+There is a `prometheus.yaml` configuration file in this repo, which is already set up to scrape metrics from our application. We will run our application, Prometheus, and Grafana inside Docker, so that they are easily able to find each other.
 
 #### Run the application, Prometheus and Grafana in Docker
 
@@ -162,6 +172,10 @@ If we want to see this graphed as a rate per-second over time, we use the PromQL
 rate(requests_total[1m])
 ```
 
+##### Challenge 3 Query your metric with PromQL
+
+Access the Prometheus interface and try out a few PromQL queries, you can even set up alerts for any behavior you want to be informed about! 
+
 #### Making Dashboards with Grafana 
 
 [Grafana](http://grafana.com) is an open-source metric visualization tool, which can be used to create dashboards containing many graphs. Grafana can visualize data from multiple sources, including Prometheus. The `docker-compose` command used in the previous section will also start a Grafana container, which uses the Grafana configuration file in this repo to connect to Prometheus. After running the startup command mentioned above, `docker-compose up --build`), you'll be able to find Grafana on `http://localhost:3000`
@@ -173,10 +187,12 @@ username: pycon2024
 password: workshop
 ```
 
-Time to get creative and visualize your metrics in a meaningful way so you can observe your application and even set up alerts for any behavior you want to be informed about! We will show you in the workshop how to build a simple dashboard panel but there's lots to explore. Lots of useful information can be found on both the [Prometheus](https://prometheus.io) and [Grafana](http://grafana.com) websites.
+#### Challenge 4 Create a Grafana Dashboard
+
+Time to get creative and visualize your metrics in a meaningful way so you can observe your application, We will show you in the workshop how to build a simple dashboard panel but there's lots to explore. Lots of useful information can be found on both the [Prometheus](https://prometheus.io) and [Grafana](http://grafana.com) websites.
 
 
-### Section 4: Carbon Conscientious Development 🌍
+### Section 4 Carbon Conscientious Development
 #### Why
 
 The tech industry is responsible for a significant portion of global carbon emissions. By measuring the carbon emissions of our applications, we can make informed decisions about how to reduce our carbon footprint. This is important for both the environment and for the sustainability of our industry, however, there is often other benefits associated with these changes such as cost savings and performance improvements. As carbon conscientious  developers the first step is knowing the current state of affairs, this where carbon metrics come in.
@@ -250,12 +266,12 @@ Then open [http://127.0.0.1:3333/](http://127.0.0.1:3333/) in your browser to se
 
 <img src="./imgs/codecarbon-dashboard.png" alt="screenshot of the dashboard" width="800">
 
-You will see that our application produces such a small amount currently that it doesn't register much on this dashboard. However, as you scale your application and add more features, you will see this number increase. This is a great way to keep track of the impact of your code on the environment and also see how it compares to other emission activities.
+You will see that our application produces such a small amount of emissions currently that it doesn't register much on this dashboard. However, as you scale your application and add more features, you will see this number increase. This is a great way to keep track of the impact of your code on the environment and also see how it compares to other emission activities.
 
 
 #### Passing our metrics to Prometheus so we can visualise them in Grafana
 
-To have a more complete view of our application, we can pass the metrics to Prometheus and add them to our dashboard (or start a new one) in Grafana.
+To have a more complete view of our application, we can pass the metrics to Prometheus and add them to our dashboard (or start a new one) in Grafana. Note that we have to do this via a Prometheus gateway, as the Codecarbon library does not have a server for Prometheus to scrape, [read more about the Prometheus Gateway](#prometheus-gateway).
 
 First stop the app if it is running and update your tracker:
 
@@ -266,6 +282,11 @@ tracker = EmissionsTracker(
     prometheus_url="http://pushgateway:9091",
 )
 ```
+#### Challenge 5 Measure carbon emissions for our application
+
+Add the `track_emissions` decorator to the `fetch_carbon_intensity()` function in the `main.py` file. Run the application and check the logs to see the metrics being tracked. You can also check the `emissions.csv` file to see the metrics being tracked. Finally, add the metrics to Prometheus and Grafana and create a dashboard to visualise them.
+
+#### Challenge 6 Adding our carbon metrics to our Grafana Dashboard
 
 We will need to run the app via `docker-compose up --build` this will also run our instance of Prometheus, Grafana and in addition a Prometheus Gateway.
 
@@ -289,7 +310,7 @@ The Prometheus Gateway is a separate service that is used to collect metrics fro
 
 ---
 
-### Bonus Material: Histograms in Prometheus 📊
+### Bonus Material Histograms in Prometheus
 
 ---
 
@@ -459,3 +480,9 @@ Traceback (most recent call last):
     raise URLError(err)
 urllib.error.URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>
 ```
+
+The error arises when Codecarbon tries to push emission data to a Prometheus gateway. The push_to_gateway function in the Prometheus client library attempts to send data using a PUT request but fails because the URL or hostname of the Prometheus gateway cannot be resolved. This is caused by the previous exception in the Codecarbon library and often resolves when you refresh the page or restart the application.
+
+## Contributing to this repository
+
+See an error or potential improvement? We welcome issues or PRs to this repository. Tag @Simpcyclassy or @sleepypioneer in your PR and we will review it as soon as possible. 
