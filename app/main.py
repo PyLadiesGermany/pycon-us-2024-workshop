@@ -3,7 +3,8 @@ import random
 import time
 
 from os import getenv
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer
+from prometheus_client import MetricsHandler
 from string import Template
 from util import artificial_503, artificial_latency
 
@@ -23,7 +24,6 @@ carbon_intensity_url = (
     f"https://api.electricitymap.org/v3/carbon-intensity/latest?zone={ZONE}"
 )
 
-
 with open("./templates/carbonIntensity.html", "r") as f:
     html_string = f.read()
 html_template = Template(html_string)
@@ -40,7 +40,7 @@ def fetch_carbon_intensity():
     return 0
 
 
-class HTTPRequestHandler(BaseHTTPRequestHandler):
+class HTTPRequestHandler(MetricsHandler):
     @artificial_latency
     def get_carbon_intensity(self):
         self.do_HEAD()
