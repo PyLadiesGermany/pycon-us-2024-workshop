@@ -3,8 +3,7 @@ import random
 import time
 
 from os import getenv
-from http.server import HTTPServer
-from prometheus_client import MetricsHandler, Counter, Histogram
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from string import Template
 from util import artificial_503, artificial_latency
 
@@ -49,8 +48,7 @@ def fetch_carbon_intensity():
     return 0
 
 
-class HTTPRequestHandler(MetricsHandler):
-    @requestHistogramCarbonIntensity.time()
+class HTTPRequestHandler(BaseHTTPRequestHandler):
     @artificial_latency
     def get_carbon_intensity(self):
         self.do_HEAD()
@@ -58,7 +56,6 @@ class HTTPRequestHandler(MetricsHandler):
         bytes_template = bytes(
             html_template.substitute(counter=carbon_intensity, zone=ZONE), "utf-8"
         )
-        requestCounter.labels(status="200", endpoint="/carbon_intensity").inc()
         self.wfile.write(bytes_template)
 
     def do_HEAD(self):
