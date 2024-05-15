@@ -2,6 +2,7 @@ import requests
 import random
 import time
 
+from codecarbon import EmissionsTracker
 from os import getenv
 from http.server import HTTPServer
 from prometheus_client import MetricsHandler, Counter, Histogram
@@ -32,18 +33,28 @@ requestCounter = Counter(
 requestHistogram = Histogram("request_latency_seconds", "Request latency", ["endpoint"])
 requestHistogramCarbonIntensity = requestHistogram.labels(endpoint="/carbon_intensity")
 
+
+# Tracker for carbon emissions
+tracker = EmissionsTracker(
+    project_name="python-app",
+    save_to_prometheus=True,
+    prometheus_url="http://pushgateway:9091",
+)
+
 with open("./templates/carbonIntensity.html", "r") as f:
     html_string = f.read()
 html_template = Template(html_string)
 
 
 def fetch_carbon_intensity():
+    tracker.start()
     r = (
         requests.get(carbon_intensity_url, auth=("auth-token", ELECTRICITY_MAP_API_KEY))
         if random.random() > 0.15
         else artificial_503()
     )
     requestCounter.labels(status=r.status_code, endpoint="/upstream").inc()
+    _ = tracker.stop()
     if r.status_code == 200:
         return r.json()["carbonIntensity"]
     return 0
